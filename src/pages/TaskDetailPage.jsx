@@ -1,33 +1,30 @@
 import { Link, useParams } from 'react-router'
+import TaskDetail from '../components/tasks/TaskDetail.jsx'
+import ErrorMessage from '../components/ui/ErrorMessage.jsx'
+import Loader from '../components/ui/Loader.jsx'
 import { useTodo } from '../hooks/useTodo.js'
 
 function TaskDetailPage() {
   const { id } = useParams()
-  const { data: todo, isPending, isError, error } = useTodo(id)
+  const { data: todo, isPending, isError, error, refetch } = useTodo(id)
+
+  function renderContent() {
+    if (isPending) return <Loader label="Loading task…" />
+    if (isError && error.status === 404) {
+      return <ErrorMessage title="Task not found" message={`There is no task with ID "${id}".`} />
+    }
+    if (isError) {
+      return <ErrorMessage title="Could not load this task" message={error.message} onRetry={refetch} />
+    }
+    return <TaskDetail todo={todo} />
+  }
 
   return (
-    <section>
-      <Link to="/tasks" className="text-sm text-indigo-600 hover:underline">
+    <section className="mx-auto max-w-3xl">
+      <Link to="/tasks" className="mb-6 inline-block text-sm font-medium text-indigo-600 hover:underline">
         ← Back to tasks
       </Link>
-
-      {isPending && <p className="mt-4 text-slate-600">Loading task…</p>}
-      {isError && (
-        <p className="mt-4 text-red-600">
-          {error.status === 404 ? `Task #${id} was not found.` : error.message}
-        </p>
-      )}
-
-      {todo && (
-        <>
-          <h1 className="mt-4 text-2xl font-bold sm:text-3xl">{todo.title}</h1>
-          <ul className="mt-4 space-y-1 text-slate-600">
-            <li>Task ID: {todo.id}</li>
-            <li>User ID: {todo.userId}</li>
-            <li>Status: {todo.completed ? 'Completed' : 'Pending'}</li>
-          </ul>
-        </>
-      )}
+      {renderContent()}
     </section>
   )
 }
